@@ -1,3 +1,6 @@
+steps:
+
+# Step 0 copy only build
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: 'bash'
   dir: 'build'
