@@ -1,4 +1,4 @@
-runtime: python38 # or python37 for Python 3.7
+runtime: python310 # upgraded from python 3.8
 
 instance_class: F1
 
