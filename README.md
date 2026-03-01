@@ -34,7 +34,6 @@ A modern weather forecasting application that combines real-time weather data wi
     ┌───────▼──────────────┐                    ┌──────────▼──────────────┐
     │  Open-Meteo API      │                    │  Google Cloud Function  │
     │  ├─ Daily Max/Min    │                    │  (Python Flask)         │
-
     │  └─ 60 Days History  │                    │  ┌──────────────────┐   │
     └──────────────────────┘                    │  │ Darts Models:    │   │
                                                 │  ├─ NaiveMean       │   │

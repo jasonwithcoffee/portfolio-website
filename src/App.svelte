@@ -390,7 +390,6 @@
     ┌───────▼──────────────┐                    ┌──────────▼──────────────┐
     │  Open-Meteo API      │                    │  Google Cloud Function  │
     │  ├─ Daily Max/Min    │                    │  (Python Flask)         │
-
     │  └─ 60 Days History  │                    │  ┌──────────────────┐   │
     └──────────────────────┘                    │  │ Darts Models:    │   │
                                                 │  ├─ NaiveMean       │   │
