@@ -22,12 +22,6 @@
   let tempsMin = [];
   let weathercodes = [];
 
-  // hourly
-  let hourlyLabels = [];
-  let hourlyTempMax = [];
-  let hourlyTempMin = [];
-  let hourlyPrecip = [];
-
   // Last 7 days summary
   let last7Days = [];
 
@@ -110,8 +104,7 @@
       console.log('fetchWeather populated', {
         labels: labels.length,
         tempsMax: tempsMax.length,
-        tempsMin: tempsMin.length,
-        hourly: hourlyLabels.length
+        tempsMin: tempsMin.length
       });
     } catch (e) {
       error = e.message;
