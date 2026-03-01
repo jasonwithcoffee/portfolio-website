@@ -8,6 +8,7 @@
   let timezone = 'America/New_York';
   let loading = false;
   let error = '';
+  let lastStatus = '';
 
   let labels = [];
   let tempsMax = [];
@@ -21,6 +22,8 @@
 
   async function fetchWeather() {
     loading = true; error = '';
+    lastStatus = 'starting';
+    console.log('fetchWeather start', { latitude, longitude, timezone });
     labels = []; tempsMax = []; tempsMin = []; weathercodes = [];
     try {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}` +
@@ -29,6 +32,7 @@
       const res = await fetch(url);
       if (!res.ok) throw new Error(res.statusText);
       const data = await res.json();
+      console.log('fetchWeather response', { ok: res.ok, size: JSON.stringify(data).length });
       if (data?.daily) {
         labels = data.daily.time || [];
         tempsMax = data.daily.temperature_2m_max || [];
@@ -43,6 +47,7 @@
       } else {
         error = 'No daily data returned from API.';
       }
+      lastStatus = 'done';
     } catch (e) {
       error = e.message;
     } finally {
