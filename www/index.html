@@ -1,1 +1,70 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"/><link rel="shortcut icon" href="/favicon.ico"/><meta name="viewport" content="initial-scale=1,width=device-width"/><meta name="theme-color" content="#000000"/><link rel="manifest" href="/manifest.json"/><title>My page</title><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"/><script defer="defer" src="/static/js/main.bb5c8778.js"></script></head><body><noscript>You need to enable JavaScript to run this app.</noscript><div id="root"></div></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Landing — My Portfolio</title>
+    <meta name="description" content="A simple landing page." />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <h1 class="logo">My Portfolio</h1>
+        <nav>
+          <a href="#features">Features</a>
+          <a href="#about">About</a>
+          <a class="cta" href="#contact">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="container">
+          <h2>Build. Ship. Iterate.</h2>
+          <p>A minimal, fast landing page — deployed with Cloud Build to Google Cloud.</p>
+          <p><a class="primary" id="get-started" href="#contact">Get in touch</a></p>
+        </div>
+      </section>
+
+      <section id="features" class="container features">
+        <article>
+          <h3>Fast</h3>
+          <p>Static assets served directly by App Engine for low latency.</p>
+        </article>
+        <article>
+          <h3>Simple</h3>
+          <p>Single-folder site, easy to update from GitHub via Cloud Build.</p>
+        </article>
+        <article>
+          <h3>Deployable</h3>
+          <p>Use the included `app.yaml` and `cloudbuild.yaml` to deploy automatically.</p>
+        </article>
+      </section>
+
+      <section id="about" class="container about">
+        <h3>About this demo</h3>
+        <p>This repository contains a minimal landing page meant to be deployed on Google Cloud (App Engine) with Cloud Build triggered from GitHub.</p>
+      </section>
+
+      <section id="contact" class="container contact">
+        <h3>Contact</h3>
+        <form id="contactForm">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" placeholder="you@example.com" required />
+          <label for="message">Message</label>
+          <textarea id="message" name="message" rows="4" placeholder="Hi — I'd like to..."></textarea>
+          <button type="submit">Send</button>
+        </form>
+        <p id="notice" class="notice" aria-live="polite"></p>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">© <span id="year"></span> My Portfolio</div>
+    </footer>
+
+    <script src="/script.js"></script>
+  </body>
+</html>
