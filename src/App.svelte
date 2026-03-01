@@ -1,7 +1,6 @@
 <script>
   import { onMount } from 'svelte';
   import WeatherChart from './components/WeatherChart.svelte';
-  import HourlyChart from './components/HourlyChart.svelte';
 
   const cities = {
     'San Francisco': { lat: 37.7749, lon: -122.4194, tz: 'America/Los_Angeles' },
@@ -61,7 +60,7 @@
     tempsMin = [];
     weathercodes = [];
     try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=${encodeURIComponent(timezone)}&past_days=60&forecast_days=7`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=${encodeURIComponent(timezone)}&past_days=60&forecast_days=0`;
       const res = await fetch(url);
       if (!res.ok) throw new Error(res.statusText);
       const data = await res.json();
@@ -305,11 +304,10 @@
       <input type="number" bind:value={forecastSteps} min="1" max="30" style="width: 80px; padding: 0.6rem;" />
     </label>
     <button 
-      on:click={generateForecast} 
-      disabled={forecastLoading || tempsMax.length === 0}
+      on:click={generateForecast}
       style="background: linear-gradient(135deg, #3b82f6, #1e40af); font-size: 1rem; padding: 0.8rem 2rem;"
     >
-      {forecastLoading ? 'Generating…' : 'Generate Forecast'}
+      Generate Forecast
     </button>
   </div>
 
@@ -325,37 +323,6 @@
     <div class="card">
       {#if labels.length}
         <WeatherChart {labels} maxData={tempsMax} minData={tempsMin} {forecastMax} {forecastMin} />
-        <h3>Hourly (next 48+ hours)</h3>
-        <div style="margin-bottom: 1rem;">
-          {#if hourlyLabels.length}
-            <HourlyChart 
-              labels={hourlyLabels} 
-              tempData={hourlyTemp} 
-              precipData={hourlyPrecip} 
-            />
-          {/if}
-        </div>
-        <h3>Daily Data</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Max</th>
-              <th>Min</th>
-              <th>Code</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each labels as label, i}
-              <tr>
-                <td>{label}</td>
-                <td>{tempsMax[i]}</td>
-                <td>{tempsMin[i]}</td>
-                <td>{weathercodes[i]}</td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
       {:else}
         <div>Loading data or no data available.</div>
       {/if}
