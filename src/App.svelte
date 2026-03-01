@@ -295,7 +295,6 @@
         <option value="naive_mean">Naive Mean</option>
         <option value="naive_seasonal">Naive Seasonal</option>
         <option value="arima">ARIMA</option>
-        <option value="prophet">Prophet</option>
         <option value="autoets">AutoETS</option>
       </select>
     </label>

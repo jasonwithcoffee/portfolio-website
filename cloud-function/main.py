@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 # Darts models
 from darts import TimeSeries
-from darts.models import NaiveMean, NaiveSeasonal, ARIMA, Prophet, AutoETS
+from darts.models import NaiveMean, NaiveSeasonal, ARIMA, AutoETS
 
 warnings.filterwarnings('ignore')
 
@@ -150,57 +150,6 @@ def forecast_arima(sequence, forecast_steps):
         raise
 
 
-def forecast_prophet(sequence, forecast_steps):
-    """
-    Forecast using Darts Prophet
-    
-    Args:
-        sequence: List of numeric values
-        forecast_steps: Number of steps to forecast
-        
-    Returns:
-        Tuple of (forecast array, confidence score)
-    """
-    logger.info(f"forecast_prophet: sequence_len={len(sequence)}, forecast_steps={forecast_steps}")
-    try:
-        import os
-        import pandas as pd
-        
-        # Suppress cmdstanpy output to avoid issues
-        os.environ['STAN_BACKEND'] = 'CMDSTANPY'
-        
-        # Suppress cmdstanpy logging
-        logging.getLogger('cmdstanpy').setLevel(logging.ERROR)
-        logging.getLogger('prophet').setLevel(logging.ERROR)
-        
-        # Create DatetimeIndex starting from today going backwards
-        # Prophet requires a DatetimeIndex, not integer range index
-        dates = pd.date_range(end=pd.Timestamp.now(), periods=len(sequence), freq='D')
-        ts = TimeSeries.from_values(np.array(sequence, dtype=float), index=dates)
-        
-        # Prophet benefits from more data but can work with less
-        if len(sequence) < 5:
-            raise ValueError(f"Prophet requires at least 5 data points, got {len(sequence)}")
-        
-        # Fit Prophet model with reasonable hyperparameters
-        # yearly_seasonality=False and daily_seasonality=False since we have daily weather data
-        logger.info("forecast_prophet: fitting Prophet model")
-        model = Prophet(yearly_seasonality=False, daily_seasonality=False, interval_width=0.95)
-        model.fit(ts)
-        
-        # Forecast
-        forecast_ts = model.predict(n=forecast_steps)
-        forecast = forecast_ts.values().flatten()
-        
-        # Confidence based on stability
-        confidence = max(0.5, min(1, 1 / (1 + np.std(sequence))))
-        
-        logger.info(f"forecast_prophet: success, confidence={confidence}")
-        return forecast, confidence
-    except Exception as e:
-        logger.error(f"forecast_prophet failed: {str(e)}", exc_info=True)
-        raise
-
 
 def forecast_autoets(sequence, forecast_steps):
     """
@@ -289,7 +238,7 @@ def forecast_weather(request: Request):
                 'message': msg
             })), 400
         
-        valid_methods = ['naive_mean', 'naive_seasonal', 'arima', 'prophet', 'autoets']
+        valid_methods = ['naive_mean', 'naive_seasonal', 'arima', 'autoets']
         if method not in valid_methods:
             msg = f'method must be one of: {", ".join(valid_methods)}. Got: {method}'
             logger.warning(f"Validation failed: {msg}")
@@ -306,8 +255,6 @@ def forecast_weather(request: Request):
             forecast, confidence = forecast_naive_seasonal(sequence, forecast_steps)
         elif method == 'arima':
             forecast, confidence = forecast_arima(sequence, forecast_steps)
-        elif method == 'prophet':
-            forecast, confidence = forecast_prophet(sequence, forecast_steps)
         else:  # autoets
             forecast, confidence = forecast_autoets(sequence, forecast_steps)
         
