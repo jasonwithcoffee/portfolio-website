@@ -25,8 +25,12 @@
 
   // hourly
   let hourlyLabels = [];
-  let hourlyTemp = [];
+  let hourlyTempMax = [];
+  let hourlyTempMin = [];
   let hourlyPrecip = [];
+
+  // Last 7 days summary
+  let last7Days = [];
 
   // ML Forecasting
   let forecastMethod = 'naive_mean';
@@ -57,7 +61,7 @@
     tempsMin = [];
     weathercodes = [];
     try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weathercode&hourly=temperature_2m,precipitation,weathercode&timezone=${encodeURIComponent(timezone)}`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=${encodeURIComponent(timezone)}&past_days=21&forecast_days=7`;
       const res = await fetch(url);
       if (!res.ok) throw new Error(res.statusText);
       const data = await res.json();
@@ -67,15 +71,35 @@
         tempsMax = data.daily.temperature_2m_max || [];
         tempsMin = data.daily.temperature_2m_min || [];
         weathercodes = data.daily.weathercode || [];
+
+        // Calculate last 7 days (past 7 days from today)
+        const pastDaysCount = data.daily.time.findIndex(d => d >= new Date().toISOString().split('T')[0]) || 0;
+        const last7StartIdx = Math.max(0, pastDaysCount - 7);
+        const last7EndIdx = pastDaysCount;
+        
+        last7Days = [];
+        for (let i = last7StartIdx; i < last7EndIdx && i < labels.length; i++) {
+          last7Days.push({
+            date: labels[i],
+            max: tempsMax[i],
+            min: tempsMin[i],
+            weathercode: weathercodes[i]
+          });
+        }
+        // If we don't have enough past data, show what we have
+        if (last7Days.length === 0 && labels.length > 0) {
+          const endIdx = Math.min(7, labels.length);
+          for (let i = 0; i < endIdx; i++) {
+            last7Days.push({
+              date: labels[i],
+              max: tempsMax[i],
+              min: tempsMin[i],
+              weathercode: weathercodes[i]
+            });
+          }
+        }
       }
 
-      if (data?.hourly) {
-        hourlyLabels = data.hourly.time || [];
-        hourlyTemp = data.hourly.temperature_2m || [];
-        hourlyPrecip = data.hourly.precipitation || [];
-      } else {
-        error = 'No daily data returned from API.';
-      }
       lastStatus = 'done';
       console.log('fetchWeather populated', {
         labels: labels.length,
@@ -106,7 +130,7 @@
     forecastMin = null;
 
     try {
-      // Make two requests in parallel - one for max temps, one for min temps
+      // Use daily min/max temperature data for forecasting
       const [maxResponse, minResponse] = await Promise.all([
         fetch(CLOUD_FUNCTION_URL, {
           method: 'POST',
@@ -214,7 +238,7 @@
   }
   .grid { 
     display: grid; 
-    grid-template-columns: 1fr; 
+    grid-template-columns: 1fr 300px; 
     gap: 1.5rem;
   }
   .card { 
@@ -280,8 +304,12 @@
       Forecast Steps
       <input type="number" bind:value={forecastSteps} min="1" max="30" style="width: 80px; padding: 0.6rem;" />
     </label>
-    <button on:click={generateForecast} disabled={forecastLoading || tempsMax.length === 0}>
-      {forecastLoading ? 'Generating…' : 'Generate Forecast'}
+    <button 
+      on:click={generateForecast} 
+      disabled={forecastLoading || tempsMax.length === 0}
+      style="background: linear-gradient(135deg, #3b82f6, #1e40af); font-size: 1rem; padding: 0.8rem 2rem;"
+    >
+      {forecastLoading ? 'Generating Forecast…' : '🔮 Generate 7-Day Forecast'}
     </button>
   </div>
 
@@ -304,18 +332,51 @@
     <div style="color: crimson; margin-bottom: 1rem;">{forecastError}</div>
   {/if}
 
+  {#if last7Days.length > 0}
+    <div class="card" style="margin-bottom: 1.5rem; background: #fef3c7; border-left: 4px solid #f59e0b;">
+      <h3 style="color: #d97706;">📊 Last 7 Days - Min/Max Temperature</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem; margin-top: 1rem;">
+        {#each last7Days as day}
+          <div style="background: white; padding: 1.25rem; border-radius: 8px; border: 2px solid #f59e0b; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <div style="font-size: 0.9rem; color: #666; font-weight: 500; margin-bottom: 0.5rem;">
+              {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+              <div style="font-size: 1.1rem; color: #dc2626; font-weight: 700;">
+                ↑ {day.max}°C
+              </div>
+              <div style="font-size: 1.1rem; color: #1e40af; font-weight: 700;">
+                ↓ {day.min}°C
+              </div>
+              <div style="font-size: 0.75rem; color: #999;">Code: {day.weathercode}</div>
+            </div>
+          </div>
+        {/each}
+      </div>
+    </div>
+  {/if}
+
   {#if forecastMax || forecastMin}
-    <div class="card" style="margin-bottom: 1.5rem; background: #f0f9ff; border-left: 4px solid #667eea;">
-      <h3>ML Forecast Results ({forecastMethod})</h3>
-      <p><strong>Confidence:</strong> {(forecastConfidence * 100).toFixed(1)}%</p>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.75rem; margin-top: 1rem;">
+    <div class="card" style="margin-bottom: 1.5rem; background: #dbeafe; border-left: 4px solid #3b82f6;">
+      <h3 style="color: #1e40af;">🔮 Forecast Results ({forecastMethod})</h3>
+      <p><strong>Confidence:</strong> <span style="color: #1e40af; font-weight: 600;">{(forecastConfidence * 100).toFixed(1)}%</span></p>
+      <p style="font-size: 0.9rem; color: #666; margin: 0.5rem 0;">Predicted temperatures for the next {forecastSteps} days</p>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem; margin-top: 1rem;">
         {#each forecastMax || [] as value, i}
-          <div style="background: white; padding: 1rem; border-radius: 6px; text-align: center; border: 1px solid #e5e7eb;">
-            <div style="font-size: 0.85rem; color: #666;">Day +{i + 1}</div>
-            <div style="font-size: 0.9rem; color: #dc2626; font-weight: 600;">Max: {value.toFixed(1)}°C</div>
-            {#if forecastMin && forecastMin[i]}
-              <div style="font-size: 0.9rem; color: #1e40af; font-weight: 600;">Min: {forecastMin[i].toFixed(1)}°C</div>
-            {/if}
+          <div style="background: white; padding: 1.25rem; border-radius: 8px; border: 2px solid #3b82f6; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <div style="font-size: 0.9rem; color: #666; font-weight: 500; margin-bottom: 0.5rem;">
+              Day +{i + 1}
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+              <div style="font-size: 1.1rem; color: #dc2626; font-weight: 700;">
+                ↑ {value.toFixed(1)}°C
+              </div>
+              {#if forecastMin && forecastMin[i]}
+                <div style="font-size: 1.1rem; color: #1e40af; font-weight: 700;">
+                  ↓ {forecastMin[i].toFixed(1)}°C
+                </div>
+              {/if}
+            </div>
           </div>
         {/each}
       </div>
@@ -325,7 +386,7 @@
   <div class="grid">
     <div class="card">
       {#if labels.length}
-        <WeatherChart {labels} maxData={tempsMax} minData={tempsMin} forecastMax={forecastMax} forecastMin={forecastMin} />
+        <WeatherChart {labels} maxData={tempsMax} minData={tempsMin} />
         <h3>Hourly (next 48+ hours)</h3>
         <div style="margin-bottom: 1rem;">
           {#if hourlyLabels.length}
@@ -360,6 +421,18 @@
       {:else}
         <div>Loading data or no data available.</div>
       {/if}
+    </div>
+
+    <div class="card">
+      <h3>Weather Comparison</h3>
+      <p>Select a city to view its weather forecast from the free Open-Meteo API.</p>
+      <p><strong>Available cities:</strong></p>
+      <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+        <li>San Francisco</li>
+        <li>New York</li>
+        <li>London</li>
+        <li>Tokyo</li>
+      </ul>
     </div>
   </div>
 </main>

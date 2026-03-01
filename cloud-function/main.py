@@ -10,6 +10,17 @@ from darts.models import NaiveMean, NaiveSeasonal, ARIMA, Prophet, AutoETS
 
 warnings.filterwarnings('ignore')
 
+"""
+Sample Curl
+curl -X POST https://simple-predict-297426001108.us-west1.run.app \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sequence": [23.5, 24.1, 23.8, 25.2, 26.1],
+    "forecast_steps": 7,
+    "method": "autoets"
+  }' -v
+"""
+
 def set_cors_headers(response):
     """Add CORS headers to response"""
     response.headers['Access-Control-Allow-Origin'] = '*'
@@ -80,13 +91,21 @@ def forecast_arima(sequence, forecast_steps):
     """
     ts = TimeSeries.from_values(np.array(sequence, dtype=float))
     
-    # Fit ARIMA model
-    model = ARIMA(p=1, d=1, q=1)
-    model.fit(ts)
-    
-    # Forecast
-    forecast_ts = model.predict(n=forecast_steps)
-    forecast = forecast_ts.values().flatten()
+    # Need at least 10 data points for ARIMA
+    if len(sequence) < 10:
+        # Fall back to NaiveMean for short sequences
+        model = NaiveMean()
+        model.fit(ts)
+        forecast_ts = model.predict(n=forecast_steps)
+        forecast = forecast_ts.values().flatten()
+    else:
+        # Fit ARIMA model
+        model = ARIMA(p=1, d=1, q=1)
+        model.fit(ts)
+        
+        # Forecast
+        forecast_ts = model.predict(n=forecast_steps)
+        forecast = forecast_ts.values().flatten()
     
     # Confidence based on stability
     confidence = max(0.5, min(1, 1 / (1 + np.std(sequence))))
@@ -107,13 +126,21 @@ def forecast_prophet(sequence, forecast_steps):
     """
     ts = TimeSeries.from_values(np.array(sequence, dtype=float))
     
-    # Fit Prophet model
-    model = Prophet()
-    model.fit(ts)
-    
-    # Forecast
-    forecast_ts = model.predict(n=forecast_steps)
-    forecast = forecast_ts.values().flatten()
+    # Need at least 10 data points for Prophet
+    if len(sequence) < 10:
+        # Fall back to NaiveMean for short sequences
+        model = NaiveMean()
+        model.fit(ts)
+        forecast_ts = model.predict(n=forecast_steps)
+        forecast = forecast_ts.values().flatten()
+    else:
+        # Fit Prophet model
+        model = Prophet()
+        model.fit(ts)
+        
+        # Forecast
+        forecast_ts = model.predict(n=forecast_steps)
+        forecast = forecast_ts.values().flatten()
     
     # Confidence based on stability
     confidence = max(0.5, min(1, 1 / (1 + np.std(sequence))))
@@ -134,13 +161,21 @@ def forecast_autoets(sequence, forecast_steps):
     """
     ts = TimeSeries.from_values(np.array(sequence, dtype=float))
     
-    # Fit AutoETS model
-    model = AutoETS()
-    model.fit(ts)
-    
-    # Forecast
-    forecast_ts = model.predict(n=forecast_steps)
-    forecast = forecast_ts.values().flatten()
+    # Need at least 10 data points for AutoETS
+    if len(sequence) < 10:
+        # Fall back to NaiveMean for short sequences
+        model = NaiveMean()
+        model.fit(ts)
+        forecast_ts = model.predict(n=forecast_steps)
+        forecast = forecast_ts.values().flatten()
+    else:
+        # Fit AutoETS model
+        model = AutoETS()
+        model.fit(ts)
+        
+        # Forecast
+        forecast_ts = model.predict(n=forecast_steps)
+        forecast = forecast_ts.values().flatten()
     
     # Confidence based on fit quality
     confidence = max(0.5, min(1, 1 / (1 + np.std(sequence))))
@@ -157,14 +192,14 @@ def forecast_weather(request: Request):
     {
         "sequence": [23.5, 24.1, 23.8, 25.2, 26.1],
         "forecast_steps": 7,
-        "method": "naive_mean"  # "naive_mean", "naive_seasonal", "arima", "prophet", or "rnn"
+        "method": "naive_mean"  # "naive_mean", "naive_seasonal", "arima", "prophet", or "autoets"
     }
     
     Returns:
     {
         "forecast": [26.8, 27.2, 27.6, 28.0, 28.4, 28.8, 29.2],
         "confidence": 0.85,
-        "status": "success"autoets
+        "status": "success"
     }
     """
     # Handle CORS preflight requests

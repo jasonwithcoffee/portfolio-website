@@ -8,6 +8,19 @@
   export let minData = [];
   export let forecastMax = null;
   export let forecastMin = null;
+  
+  // Format hourly labels to show time only
+  function formatHourlyLabels(labels) {
+    return labels.map(label => {
+      if (!label) return '';
+      // Extract time portion from ISO datetime (HH:mm format)
+      const parts = label.split('T');
+      if (parts.length > 1) {
+        return parts[1].substring(0, 5); // Get HH:mm
+      }
+      return label;
+    });
+  }
 
   let canvasEl;
   let chart;
@@ -17,15 +30,17 @@
     const ctx = canvasEl.getContext('2d');
     if (chart) chart.destroy();
     
+    const formattedLabels = formatHourlyLabels(labels);
+    
     const datasets = [
       { 
         label: 'Max °C', 
-        data: maxData, 
+        data: maxData,
         borderColor: '#ef4444', 
         backgroundColor: 'rgba(239, 68, 68, 0.1)',
         tension: 0.4, 
         fill: true,
-        pointRadius: 4,
+        pointRadius: 0,
         pointHoverRadius: 6,
         pointBackgroundColor: '#ef4444',
         pointBorderColor: '#fff',
@@ -38,7 +53,7 @@
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
         tension: 0.4, 
         fill: true,
-        pointRadius: 4,
+        pointRadius: 0,
         pointHoverRadius: 6,
         pointBackgroundColor: '#3b82f6',
         pointBorderColor: '#fff',
@@ -47,7 +62,7 @@
     ];
 
     // Add forecast data if available
-    let extendedLabels = [...labels];
+    let extendedLabels = [...formattedLabels];
     if ((forecastMax && forecastMax.length > 0) || (forecastMin && forecastMin.length > 0)) {
       const forecastLength = forecastMax?.length || forecastMin?.length || 0;
       const forecastLabels = Array.from({ length: forecastLength }, (_, i) => `+${i + 1}`);
@@ -60,7 +75,7 @@
       datasets[0].data = paddedMaxData;
       datasets[1].data = paddedMinData;
       
-      // Add forecast max as a new dataset
+      // Add forecast as a new dataset
       if (forecastMax && forecastMax.length > 0) {
         datasets.push({
           label: 'Forecast Max',
@@ -70,7 +85,7 @@
           borderDash: [5, 5],
           tension: 0.4,
           fill: true,
-          pointRadius: 5,
+          pointRadius: 0,
           pointHoverRadius: 7,
           pointBackgroundColor: '#dc2626',
           pointBorderColor: '#fff',
@@ -88,7 +103,7 @@
           borderDash: [5, 5],
           tension: 0.4,
           fill: true,
-          pointRadius: 5,
+          pointRadius: 0,
           pointHoverRadius: 7,
           pointBackgroundColor: '#1e40af',
           pointBorderColor: '#fff',

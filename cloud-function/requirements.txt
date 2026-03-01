@@ -2,3 +2,5 @@ functions-framework
 numpy
 Flask
 darts
+statsforecast
+cmdstanpy
