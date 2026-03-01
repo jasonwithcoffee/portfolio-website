@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Sun with rays -->
+  <defs>
+    <style>
+      .sun-circle { fill: #FFD700; }
+      .sun-rays { stroke: #FFD700; stroke-width: 3; stroke-linecap: round; }
+    </style>
+  </defs>
+  
+  <!-- Sun rays -->
+  <line class="sun-rays" x1="50" y1="10" x2="50" y2="25"/>
+  <line class="sun-rays" x1="50" y1="75" x2="50" y2="90"/>
+  <line class="sun-rays" x1="10" y1="50" x2="25" y2="50"/>
+  <line class="sun-rays" x1="75" y1="50" x2="90" y2="50"/>
+  <line class="sun-rays" x1="18" y1="18" x2="29" y2="29"/>
+  <line class="sun-rays" x1="71" y1="71" x2="82" y2="82"/>
+  <line class="sun-rays" x1="82" y1="18" x2="71" y2="29"/>
+  <line class="sun-rays" x1="29" y1="71" x2="18" y2="82"/>
+  
+  <!-- Sun circle -->
+  <circle class="sun-circle" cx="50" cy="50" r="20"/>
+</svg>
