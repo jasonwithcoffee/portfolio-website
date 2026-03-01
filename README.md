@@ -1,18 +1,33 @@
-# Landing page demo
+# Svelte + Open-Meteo Demo
 
-This repository contains a minimal static landing page under the `www/` folder. The included `app.yaml` and `cloudbuild.yaml` are configured to deploy the site to Google App Engine using Cloud Build.
+Lightweight demo showing how to fetch daily weather data from the free Open-Meteo API and visualize it with Svelte + Chart.js.
 
-Quick deploy steps (manual):
+Quick start
 
-1. Install and authenticate the Google Cloud SDK.
-2. Set your project: `gcloud config set project YOUR_PROJECT_ID`
-3. Deploy: `gcloud app deploy`
+1. Install dependencies
 
-CI via Cloud Build (GitHub):
+```bash
+npm install
+```
 
-- Create a Cloud Build trigger in the Google Cloud Console that connects to your GitHub repository and triggers on pushes to the branch you want to deploy.
-- The existing `cloudbuild.yaml` runs `gcloud app deploy` and will deploy the App Engine app.
+2. Run dev server
 
-Notes:
-- The site is static and served from `www/` as configured in `app.yaml`.
-- If you prefer Cloud Functions/Cloud Run instead of App Engine, I can scaffold that.
+```bash
+npm run dev
+```
+
+Open http://localhost:5173 and try changing coordinates (default is New York City).
+
+This demo now includes an hourly forecast visualization (temperature line + precipitation bars).
+
+Files added
+
+- [package.json](package.json)
+- [index.html](index.html)
+- [src/main.js](src/main.js)
+- [src/App.svelte](src/App.svelte)
+- [src/components/WeatherChart.svelte](src/components/WeatherChart.svelte)
+
+Next steps
+
+- Commit the scaffold and tweak styling or add more visualizations (hourly, precipitation probability, icons for weather codes).
