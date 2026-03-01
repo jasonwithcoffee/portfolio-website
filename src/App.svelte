@@ -376,4 +376,16 @@
       {/if}
     </div>
   </div>
+
+  <div class="card" style="margin-top: 2rem;">
+    <h3 style="color: #667eea; margin-top: 0;">How It Works</h3>
+    <ol style="line-height: 1.8; color: #333;">
+      <li><strong>Select a City:</strong> Choose from San Francisco, New York, London, or Tokyo</li>
+      <li><strong>Fetch Weather Data:</strong> App retrieves 60 days of historical weather data from the Open-Meteo API</li>
+      <li><strong>Configure Forecast:</strong> Select your preferred ML model (Naive Mean, Naive Seasonal, ARIMA, or AutoETS) and number of forecast steps</li>
+      <li><strong>Generate Predictions:</strong> Historical temperature data is sent to the backend (Google Cloud Function running Python + Darts)</li>
+      <li><strong>ML Processing:</strong> The selected forecasting model analyzes patterns in historical data to predict future temperatures</li>
+      <li><strong>Visualize Results:</strong> Interactive charts display historical temperatures and ML-generated forecasts side-by-side</li>
+    </ol>
+  </div>
 </main>

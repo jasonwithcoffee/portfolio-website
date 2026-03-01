@@ -15,6 +15,45 @@ A modern weather forecasting application that combines real-time weather data wi
 - **Hourly Forecasts**: Detailed hourly weather predictions
 - **Responsive Design**: Works seamlessly across desktop and mobile devices
 
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         User Browser                                 │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │     Svelte Weather App (Frontend)                             │  │
+│  │  ┌─────────────────┐         ┌──────────────────────────┐   │  │
+│  │  │ City Selection  │ ──────► │ Chart.js Visualizations │   │  │
+│  │  ├─────────────────┤         ├──────────────────────────┤   │  │
+│  │  │ Forecast Config │         │ Daily/Hourly Charts     │   │  │
+│  │  └─────────────────┘         └──────────────────────────┘   │  │
+│  └────────┬──────────────────────────────────────────────┬──────┘  │
+└───────────┼──────────────────────────────────────────────┼─────────┘
+            │ (2) Fetch Weather Data                       │
+            │                                              │ (3) Forecast Request
+            │                                              │
+    ┌───────▼──────────────┐                    ┌─────────▼──────────────┐
+    │  Open-Meteo API      │                    │  Google Cloud Function │
+    │  ├─ Daily Max/Min    │                    │  (Python Flask)        │
+    │  ├─ Hourly Forecast  │                    │                        │
+    │  └─ 60 Days History  │                    │  ┌──────────────────┐  │
+    └──────────────────────┘                    │  │ Darts Models:    │  │
+                                                │  ├─ NaiveMean      │  │
+                                                │  ├─ NaiveSeasonal  │  │
+                                                │  ├─ ARIMA          │  │
+                                                │  ├─ AutoETS        │  │
+                                                │  └──────────────────┘  │
+                                                │  (3) Returns Forecast  │
+                                                └────────────────────────┘
+```
+
+**Data Flow:**
+1. User selects city and forecast parameters in UI
+2. App fetches historical weather data from Open-Meteo API
+3. Historical data sent to Cloud Function for ML forecasting
+4. Multiple models generate temperature predictions
+5. Results visualized in interactive charts
+
 ## Tech Stack
 
 **Frontend:**
