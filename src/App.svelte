@@ -309,19 +309,8 @@
       disabled={forecastLoading || tempsMax.length === 0}
       style="background: linear-gradient(135deg, #3b82f6, #1e40af); font-size: 1rem; padding: 0.8rem 2rem;"
     >
-      {forecastLoading ? 'Generating Forecast…' : '🔮 Generate 7-Day Forecast'}
+      {forecastLoading ? 'Generating…' : 'Generate Forecast'}
     </button>
-  </div>
-
-  <div style="margin-bottom: 0.5rem;">
-    Status: {lastStatus} {loading ? '(loading)' : ''}
-  </div>
-
-  <div style="font-size: 0.9rem; color: #444; margin-bottom: 0.75rem;">
-    Debug: labels={labels.length}, max={tempsMax.length}, min={tempsMin.length}, hourly={hourlyLabels.length}
-    {#if labels.length}
-      — first: {labels[0]} / {tempsMax[0]}°C
-    {/if}
   </div>
 
   {#if error}
@@ -330,57 +319,6 @@
 
   {#if forecastError}
     <div style="color: crimson; margin-bottom: 1rem;">{forecastError}</div>
-  {/if}
-
-  {#if last7Days.length > 0}
-    <div class="card" style="margin-bottom: 1.5rem; background: #fef3c7; border-left: 4px solid #f59e0b;">
-      <h3 style="color: #d97706;">📊 Last 7 Days - Min/Max Temperature</h3>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem; margin-top: 1rem;">
-        {#each last7Days as day}
-          <div style="background: white; padding: 1.25rem; border-radius: 8px; border: 2px solid #f59e0b; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-            <div style="font-size: 0.9rem; color: #666; font-weight: 500; margin-bottom: 0.5rem;">
-              {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-              <div style="font-size: 1.1rem; color: #dc2626; font-weight: 700;">
-                ↑ {day.max}°C
-              </div>
-              <div style="font-size: 1.1rem; color: #1e40af; font-weight: 700;">
-                ↓ {day.min}°C
-              </div>
-              <div style="font-size: 0.75rem; color: #999;">Code: {day.weathercode}</div>
-            </div>
-          </div>
-        {/each}
-      </div>
-    </div>
-  {/if}
-
-  {#if forecastMax || forecastMin}
-    <div class="card" style="margin-bottom: 1.5rem; background: #dbeafe; border-left: 4px solid #3b82f6;">
-      <h3 style="color: #1e40af;">🔮 Forecast Results ({forecastMethod})</h3>
-      <p><strong>Confidence:</strong> <span style="color: #1e40af; font-weight: 600;">{(forecastConfidence * 100).toFixed(1)}%</span></p>
-      <p style="font-size: 0.9rem; color: #666; margin: 0.5rem 0;">Predicted temperatures for the next {forecastSteps} days</p>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem; margin-top: 1rem;">
-        {#each forecastMax || [] as value, i}
-          <div style="background: white; padding: 1.25rem; border-radius: 8px; border: 2px solid #3b82f6; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-            <div style="font-size: 0.9rem; color: #666; font-weight: 500; margin-bottom: 0.5rem;">
-              Day +{i + 1}
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-              <div style="font-size: 1.1rem; color: #dc2626; font-weight: 700;">
-                ↑ {value.toFixed(1)}°C
-              </div>
-              {#if forecastMin && forecastMin[i]}
-                <div style="font-size: 1.1rem; color: #1e40af; font-weight: 700;">
-                  ↓ {forecastMin[i].toFixed(1)}°C
-                </div>
-              {/if}
-            </div>
-          </div>
-        {/each}
-      </div>
-    </div>
   {/if}
 
   <div class="grid">

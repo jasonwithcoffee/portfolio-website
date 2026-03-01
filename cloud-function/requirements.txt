@@ -1,5 +1,6 @@
 functions-framework
 numpy
+pandas
 Flask
 darts
 statsforecast

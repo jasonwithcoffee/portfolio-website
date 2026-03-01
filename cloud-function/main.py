@@ -164,6 +164,7 @@ def forecast_prophet(sequence, forecast_steps):
     logger.info(f"forecast_prophet: sequence_len={len(sequence)}, forecast_steps={forecast_steps}")
     try:
         import os
+        import pandas as pd
         
         # Suppress cmdstanpy output to avoid issues
         os.environ['STAN_BACKEND'] = 'CMDSTANPY'
@@ -172,7 +173,10 @@ def forecast_prophet(sequence, forecast_steps):
         logging.getLogger('cmdstanpy').setLevel(logging.ERROR)
         logging.getLogger('prophet').setLevel(logging.ERROR)
         
-        ts = TimeSeries.from_values(np.array(sequence, dtype=float))
+        # Create DatetimeIndex starting from today going backwards
+        # Prophet requires a DatetimeIndex, not integer range index
+        dates = pd.date_range(end=pd.Timestamp.now(), periods=len(sequence), freq='D')
+        ts = TimeSeries.from_values(np.array(sequence, dtype=float), index=dates)
         
         # Prophet benefits from more data but can work with less
         if len(sequence) < 5:
