@@ -4,3 +4,4 @@ Flask
 darts
 statsforecast
 cmdstanpy
+prophet

@@ -61,7 +61,7 @@
     tempsMin = [];
     weathercodes = [];
     try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=${encodeURIComponent(timezone)}&past_days=21&forecast_days=7`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=${encodeURIComponent(timezone)}&past_days=60&forecast_days=7`;
       const res = await fetch(url);
       if (!res.ok) throw new Error(res.statusText);
       const data = await res.json();
@@ -238,7 +238,7 @@
   }
   .grid { 
     display: grid; 
-    grid-template-columns: 1fr 300px; 
+    grid-template-columns: 1fr; 
     gap: 1.5rem;
   }
   .card { 
@@ -386,7 +386,7 @@
   <div class="grid">
     <div class="card">
       {#if labels.length}
-        <WeatherChart {labels} maxData={tempsMax} minData={tempsMin} />
+        <WeatherChart {labels} maxData={tempsMax} minData={tempsMin} {forecastMax} {forecastMin} />
         <h3>Hourly (next 48+ hours)</h3>
         <div style="margin-bottom: 1rem;">
           {#if hourlyLabels.length}
@@ -421,18 +421,6 @@
       {:else}
         <div>Loading data or no data available.</div>
       {/if}
-    </div>
-
-    <div class="card">
-      <h3>Weather Comparison</h3>
-      <p>Select a city to view its weather forecast from the free Open-Meteo API.</p>
-      <p><strong>Available cities:</strong></p>
-      <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
-        <li>San Francisco</li>
-        <li>New York</li>
-        <li>London</li>
-        <li>Tokyo</li>
-      </ul>
     </div>
   </div>
 </main>
