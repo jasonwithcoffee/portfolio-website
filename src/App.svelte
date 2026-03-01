@@ -22,12 +22,6 @@
   let tempsMin = [];
   let weathercodes = [];
 
-  // hourly
-  let hourlyLabels = [];
-  let hourlyTempMax = [];
-  let hourlyTempMin = [];
-  let hourlyPrecip = [];
-
   // Last 7 days summary
   let last7Days = [];
 
@@ -110,8 +104,7 @@
       console.log('fetchWeather populated', {
         labels: labels.length,
         tempsMax: tempsMax.length,
-        tempsMin: tempsMin.length,
-        hourly: hourlyLabels.length
+        tempsMin: tempsMin.length
       });
     } catch (e) {
       error = e.message;
@@ -387,17 +380,16 @@
 │  │  ┌─────────────────┐         ┌──────────────────────────┐    │   │
 │  │  │ City Selection  │ ──────► │ Chart.js Visualizations  │    │   │
 │  │  ├─────────────────┤         ├──────────────────────────┤    │   │
-│  │  │ Forecast Config │         │ Daily/Hourly Charts      │    │   │
+│  │  │ Forecast Config │         │ Daily Charts             │    │   │
 │  │  └─────────────────┘         └──────────────────────────┘    │   │
 │  └────────┬──────────────────────────────────────────────┬──────┘   │
 └───────────┼──────────────────────────────────────────────┼──────────┘
-            │ (2) Fetch Weather Data                       │
-            │                                              │ (3) Forecast Request
+            │ (1) Fetch Weather Data                       │
+            │                                              │ (2) Forecast Request
             │                                              │
     ┌───────▼──────────────┐                    ┌──────────▼──────────────┐
     │  Open-Meteo API      │                    │  Google Cloud Function  │
     │  ├─ Daily Max/Min    │                    │  (Python Flask)         │
-    │  ├─ Hourly Forecast  │                    │                         │
     │  └─ 60 Days History  │                    │  ┌──────────────────┐   │
     └──────────────────────┘                    │  │ Darts Models:    │   │
                                                 │  ├─ NaiveMean       │   │
