@@ -3,16 +3,17 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Landing — My Portfolio</title>
-    <meta name="description" content="A simple landing page." />
+    <title>Jason Yang — Software Engineer</title>
+    <meta name="description" content="Jason Yang — software engineer focused on web applications and dev tooling." />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <header class="site-header">
       <div class="container">
-        <h1 class="logo">My Portfolio</h1>
+        <h1 class="logo">Jason Yang</h1>
         <nav>
-          <a href="#features">Features</a>
+          <a href="#projects">Projects</a>
+          <a href="#skills">Skills</a>
           <a href="#about">About</a>
           <a class="cta" href="#contact">Contact</a>
         </nav>
@@ -22,34 +23,46 @@
     <main>
       <section class="hero">
         <div class="container">
-          <h2>Build. Ship. Iterate.</h2>
-          <p>A minimal, fast landing page — deployed with Cloud Build to Google Cloud.</p>
-          <p><a class="primary" id="get-started" href="#contact">Get in touch</a></p>
+          <h2>Software Engineer</h2>
+          <p>Building reliable web applications and tools — focused on clarity, performance, and great developer experience.</p>
+          <p>
+            <a class="primary" href="#projects">View projects</a>
+            <a style="margin-left:12px;color:var(--muted);text-decoration:none" href="/resume.pdf">Resume</a>
+          </p>
         </div>
       </section>
 
-      <section id="features" class="container features">
+      <section id="projects" class="container features">
         <article>
-          <h3>Fast</h3>
-          <p>Static assets served directly by App Engine for low latency.</p>
+          <h3>Portfolio Website</h3>
+          <p>Minimal, accessible static site with a simple CI/CD pipeline.</p>
+          <p><a href="https://github.com/your-username/portfolio" target="_blank" rel="noopener">View on GitHub</a></p>
         </article>
         <article>
-          <h3>Simple</h3>
-          <p>Single-folder site, easy to update from GitHub via Cloud Build.</p>
+          <h3>Task Manager</h3>
+          <p>Full-stack app with real-time updates and offline support.</p>
+          <p><a href="https://github.com/your-username/task-manager" target="_blank" rel="noopener">View on GitHub</a></p>
         </article>
         <article>
-          <h3>Deployable</h3>
-          <p>Use the included `app.yaml` and `cloudbuild.yaml` to deploy automatically.</p>
+          <h3>Dev CLI</h3>
+          <p>Developer CLI tooling to speed up local workflows and deployments.</p>
+          <p><a href="https://github.com/your-username/dev-cli" target="_blank" rel="noopener">View on GitHub</a></p>
         </article>
       </section>
 
+      <section id="skills" class="container about">
+        <h3>Skills</h3>
+        <p>JavaScript / TypeScript · Node.js · React · HTML & CSS · CI/CD · Cloud Platforms · Testing · Dev Tools</p>
+      </section>
+
       <section id="about" class="container about">
-        <h3>About this demo</h3>
-        <p>This repository contains a minimal landing page meant to be deployed on Google Cloud (App Engine) with Cloud Build triggered from GitHub.</p>
+        <h3>About</h3>
+        <p>I’m a software engineer who enjoys simplifying complex systems and improving developer experience. I focus on shipping reliable, maintainable software and iterating quickly with feedback.</p>
       </section>
 
       <section id="contact" class="container contact">
         <h3>Contact</h3>
+        <p style="color:var(--muted);margin-top:0;margin-bottom:12px">Email: <a href="mailto:hello@example.com">hello@example.com</a> · <a href="https://github.com/your-username" target="_blank" rel="noopener">GitHub</a> · <a href="https://linkedin.com/in/your-profile" target="_blank" rel="noopener">LinkedIn</a></p>
         <form id="contactForm">
           <label for="email">Email</label>
           <input id="email" name="email" type="email" placeholder="you@example.com" required />
@@ -62,7 +75,7 @@
     </main>
 
     <footer class="site-footer">
-      <div class="container">© <span id="year"></span> My Portfolio</div>
+      <div class="container">© <span id="year"></span> Jason Yang</div>
     </footer>
 
     <script src="/script.js"></script>
