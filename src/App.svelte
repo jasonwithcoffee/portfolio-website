@@ -79,6 +79,8 @@
     <button on:click={fetchWeather} disabled={loading}>{loading ? 'Loading…' : 'Fetch'}</button>
   </div>
 
+  <div style="margin-bottom:0.5rem">Status: {lastStatus} {loading ? '(loading)' : ''}</div>
+
   {#if error}
     <div style="color:crimson">{error}</div>
   {/if}
