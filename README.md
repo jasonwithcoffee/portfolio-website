@@ -19,32 +19,32 @@ A modern weather forecasting application that combines real-time weather data wi
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                         User Browser                                 │
-│  ┌──────────────────────────────────────────────────────────────┐  │
-│  │     Svelte Weather App (Frontend)                             │  │
-│  │  ┌─────────────────┐         ┌──────────────────────────┐   │  │
-│  │  │ City Selection  │ ──────► │ Chart.js Visualizations │   │  │
-│  │  ├─────────────────┤         ├──────────────────────────┤   │  │
-│  │  │ Forecast Config │         │ Daily/Hourly Charts     │   │  │
-│  │  └─────────────────┘         └──────────────────────────┘   │  │
-│  └────────┬──────────────────────────────────────────────┬──────┘  │
-└───────────┼──────────────────────────────────────────────┼─────────┘
+│                         User Browser                                │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │     Svelte Weather App (Frontend)                            │   │
+│  │  ┌─────────────────┐         ┌──────────────────────────┐    │   │
+│  │  │ City Selection  │ ──────► │ Chart.js Visualizations  │    │   │
+│  │  ├─────────────────┤         ├──────────────────────────┤    │   │
+│  │  │ Forecast Config │         │ Daily/Hourly Charts      │    │   │
+│  │  └─────────────────┘         └──────────────────────────┘    │   │
+│  └────────┬──────────────────────────────────────────────┬──────┘   │
+└───────────┼──────────────────────────────────────────────┼──────────┘
             │ (2) Fetch Weather Data                       │
             │                                              │ (3) Forecast Request
             │                                              │
-    ┌───────▼──────────────┐                    ┌─────────▼──────────────┐
-    │  Open-Meteo API      │                    │  Google Cloud Function │
-    │  ├─ Daily Max/Min    │                    │  (Python Flask)        │
-    │  ├─ Hourly Forecast  │                    │                        │
-    │  └─ 60 Days History  │                    │  ┌──────────────────┐  │
-    └──────────────────────┘                    │  │ Darts Models:    │  │
-                                                │  ├─ NaiveMean      │  │
-                                                │  ├─ NaiveSeasonal  │  │
-                                                │  ├─ ARIMA          │  │
-                                                │  ├─ AutoETS        │  │
-                                                │  └──────────────────┘  │
-                                                │  (3) Returns Forecast  │
-                                                └────────────────────────┘
+    ┌───────▼──────────────┐                    ┌──────────▼──────────────┐
+    │  Open-Meteo API      │                    │  Google Cloud Function  │
+    │  ├─ Daily Max/Min    │                    │  (Python Flask)         │
+    │  ├─ Hourly Forecast  │                    │                         │
+    │  └─ 60 Days History  │                    │  ┌──────────────────┐   │
+    └──────────────────────┘                    │  │ Darts Models:    │   │
+                                                │  ├─ NaiveMean       │   │
+                                                │  ├─ NaiveSeasonal   │   │
+                                                │  ├─ ARIMA           │   │
+                                                │  ├─ AutoETS         │   │
+                                                │  └──────────────────┘   │
+                                                │  (3) Returns Forecast   │
+                                                └─────────────────────────┘
 ```
 
 **Data Flow:**

@@ -378,14 +378,38 @@
   </div>
 
   <div class="card" style="margin-top: 2rem;">
-    <h3 style="color: #667eea; margin-top: 0;">How It Works</h3>
-    <ol style="line-height: 1.8; color: #333;">
-      <li><strong>Select a City:</strong> Choose from San Francisco, New York, London, or Tokyo</li>
-      <li><strong>Fetch Weather Data:</strong> App retrieves 60 days of historical weather data from the Open-Meteo API</li>
-      <li><strong>Configure Forecast:</strong> Select your preferred ML model (Naive Mean, Naive Seasonal, ARIMA, or AutoETS) and number of forecast steps</li>
-      <li><strong>Generate Predictions:</strong> Historical temperature data is sent to the backend (Google Cloud Function running Python + Darts)</li>
-      <li><strong>ML Processing:</strong> The selected forecasting model analyzes patterns in historical data to predict future temperatures</li>
-      <li><strong>Visualize Results:</strong> Interactive charts display historical temperatures and ML-generated forecasts side-by-side</li>
-    </ol>
+    <h3 style="color: #667eea; margin-top: 0;">Architecture</h3>
+    <pre style="background: #f3f4f6; padding: 1.5rem; border-radius: 8px; overflow-x: auto; font-size: 0.80rem; line-height: 1.5; color: #1f2937; font-family: 'Courier New', monospace;">
+┌─────────────────────────────────────────────────────────────────────┐
+│                         User Browser                                │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │     Svelte Weather App (Frontend)                            │   │
+│  │  ┌─────────────────┐         ┌──────────────────────────┐    │   │
+│  │  │ City Selection  │ ──────► │ Chart.js Visualizations  │    │   │
+│  │  ├─────────────────┤         ├──────────────────────────┤    │   │
+│  │  │ Forecast Config │         │ Daily/Hourly Charts      │    │   │
+│  │  └─────────────────┘         └──────────────────────────┘    │   │
+│  └────────┬──────────────────────────────────────────────┬──────┘   │
+└───────────┼──────────────────────────────────────────────┼──────────┘
+            │ (2) Fetch Weather Data                       │
+            │                                              │ (3) Forecast Request
+            │                                              │
+    ┌───────▼──────────────┐                    ┌──────────▼──────────────┐
+    │  Open-Meteo API      │                    │  Google Cloud Function  │
+    │  ├─ Daily Max/Min    │                    │  (Python Flask)         │
+    │  ├─ Hourly Forecast  │                    │                         │
+    │  └─ 60 Days History  │                    │  ┌──────────────────┐   │
+    └──────────────────────┘                    │  │ Darts Models:    │   │
+                                                │  ├─ NaiveMean       │   │
+                                                │  ├─ NaiveSeasonal   │   │
+                                                │  ├─ ARIMA           │   │
+                                                │  ├─ AutoETS         │   │
+                                                │  └──────────────────┘   │
+                                                │  (3) Returns Forecast   │
+                                                └─────────────────────────┘
+    </pre>
+    <p style="margin-top: 1rem; color: #666; font-size: 0.9rem;">
+      <strong>Data Flow:</strong> Select a city → Fetch historical weather data from Open-Meteo API → Configure ML forecast model → Send data to Cloud Function → Generate predictions → Visualize results in interactive charts
+    </p>
   </div>
 </main>
