@@ -65,7 +65,18 @@
     let extendedLabels = [...formattedLabels];
     if ((forecastMax && forecastMax.length > 0) || (forecastMin && forecastMin.length > 0)) {
       const forecastLength = forecastMax?.length || forecastMin?.length || 0;
-      const forecastLabels = Array.from({ length: forecastLength }, (_, i) => `+${i + 1}`);
+      
+      // Generate future dates continuing from the last date
+      const forecastLabels = [];
+      if (labels.length > 0) {
+        const lastDate = new Date(labels[labels.length - 1]);
+        for (let i = 1; i <= forecastLength; i++) {
+          const nextDate = new Date(lastDate);
+          nextDate.setDate(nextDate.getDate() + i);
+          forecastLabels.push(nextDate.toISOString().split('T')[0]);
+        }
+      }
+      
       extendedLabels = [...extendedLabels, ...forecastLabels];
       
       // Extend max and min data with null values to align with new labels
@@ -77,9 +88,10 @@
       
       // Add forecast as a new dataset
       if (forecastMax && forecastMax.length > 0) {
+        const lastMaxValue = maxData.length > 0 ? maxData[maxData.length - 1] : null;
         datasets.push({
           label: 'Forecast Max',
-          data: [...Array(maxData.length).fill(null), ...forecastMax],
+          data: [...Array(maxData.length - 1).fill(null), lastMaxValue, ...forecastMax],
           borderColor: '#dc2626',
           backgroundColor: 'rgba(220, 38, 38, 0.1)',
           borderDash: [5, 5],
@@ -95,9 +107,10 @@
 
       // Add forecast min as a new dataset
       if (forecastMin && forecastMin.length > 0) {
+        const lastMinValue = minData.length > 0 ? minData[minData.length - 1] : null;
         datasets.push({
           label: 'Forecast Min',
-          data: [...Array(minData.length).fill(null), ...forecastMin],
+          data: [...Array(minData.length - 1).fill(null), lastMinValue, ...forecastMin],
           borderColor: '#1e40af',
           backgroundColor: 'rgba(30, 64, 175, 0.1)',
           borderDash: [5, 5],
