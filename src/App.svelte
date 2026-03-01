@@ -293,7 +293,15 @@
 </style>
 
 <main>
-  <h1>Svelte + Open-Meteo Demo</h1>
+  <div style="margin-bottom: 1.5rem;">
+    <h1>Weather Forecast App</h1>
+    <p style="color: rgba(255,255,255,0.95); margin: 0.5rem 0; font-size: 0.95rem;">
+      ML-powered weather forecasting using real-time data and time-series predictions
+    </p>
+    <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 0.85rem; margin-top: 0.5rem;">
+      Created by Jason Yang
+    </p>
+  </div>
 
   <div class="controls">
     <label>
