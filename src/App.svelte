@@ -29,11 +29,12 @@
   let hourlyPrecip = [];
 
   // ML Forecasting
-  let forecastMethod = 'linear';
+  let forecastMethod = 'naive_mean';
   let forecastSteps = 7;
   let forecastLoading = false;
   let forecastError = '';
-  let forecast = null;
+  let forecastMax = null;
+  let forecastMin = null;
   let forecastConfidence = 0;
   const CLOUD_FUNCTION_URL = 'https://simple-predict-297426001108.us-west1.run.app'; // Change to your deployed Cloud Function URL
 
@@ -94,34 +95,51 @@
   });
 
   async function generateForecast() {
-    if (tempsMax.length === 0) {
+    if (tempsMax.length === 0 || tempsMin.length === 0) {
       forecastError = 'Please load weather data first';
       return;
     }
 
     forecastLoading = true;
     forecastError = '';
-    forecast = null;
+    forecastMax = null;
+    forecastMin = null;
 
     try {
-      const response = await fetch(CLOUD_FUNCTION_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sequence: tempsMax,
-          forecast_steps: forecastSteps,
-          method: forecastMethod
+      // Make two requests in parallel - one for max temps, one for min temps
+      const [maxResponse, minResponse] = await Promise.all([
+        fetch(CLOUD_FUNCTION_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sequence: tempsMax,
+            forecast_steps: forecastSteps,
+            method: forecastMethod
+          })
+        }),
+        fetch(CLOUD_FUNCTION_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sequence: tempsMin,
+            forecast_steps: forecastSteps,
+            method: forecastMethod
+          })
         })
-      });
+      ]);
 
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const data = await response.json();
+      if (!maxResponse.ok) throw new Error(`HTTP ${maxResponse.status} for max forecast`);
+      if (!minResponse.ok) throw new Error(`HTTP ${minResponse.status} for min forecast`);
+      
+      const maxData = await maxResponse.json();
+      const minData = await minResponse.json();
 
-      if (data.status === 'success') {
-        forecast = data.forecast;
-        forecastConfidence = data.confidence;
+      if (maxData.status === 'success' && minData.status === 'success') {
+        forecastMax = maxData.forecast;
+        forecastMin = minData.forecast;
+        forecastConfidence = (maxData.confidence + minData.confidence) / 2;
       } else {
-        forecastError = data.message || 'Forecast failed';
+        forecastError = maxData.message || minData.message || 'Forecast failed';
       }
     } catch (e) {
       forecastError = `Error: ${e.message}`;
@@ -196,7 +214,7 @@
   }
   .grid { 
     display: grid; 
-    grid-template-columns: 1fr 300px; 
+    grid-template-columns: 1fr; 
     gap: 1.5rem;
   }
   .card { 
@@ -251,9 +269,11 @@
     <label>
       Forecast Method
       <select bind:value={forecastMethod}>
-        <option value="linear">Linear</option>
-        <option value="polynomial">Polynomial</option>
-        <option value="random_forest">Random Forest</option>
+        <option value="naive_mean">Naive Mean</option>
+        <option value="naive_seasonal">Naive Seasonal</option>
+        <option value="arima">ARIMA</option>
+        <option value="prophet">Prophet</option>
+        <option value="autoets">AutoETS</option>
       </select>
     </label>
     <label>
@@ -284,15 +304,18 @@
     <div style="color: crimson; margin-bottom: 1rem;">{forecastError}</div>
   {/if}
 
-  {#if forecast}
+  {#if forecastMax || forecastMin}
     <div class="card" style="margin-bottom: 1.5rem; background: #f0f9ff; border-left: 4px solid #667eea;">
       <h3>ML Forecast Results ({forecastMethod})</h3>
       <p><strong>Confidence:</strong> {(forecastConfidence * 100).toFixed(1)}%</p>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.75rem; margin-top: 1rem;">
-        {#each forecast as value, i}
+        {#each forecastMax || [] as value, i}
           <div style="background: white; padding: 1rem; border-radius: 6px; text-align: center; border: 1px solid #e5e7eb;">
             <div style="font-size: 0.85rem; color: #666;">Day +{i + 1}</div>
-            <div style="font-size: 1.5rem; font-weight: bold; color: #667eea;">{value.toFixed(1)}°C</div>
+            <div style="font-size: 0.9rem; color: #dc2626; font-weight: 600;">Max: {value.toFixed(1)}°C</div>
+            {#if forecastMin && forecastMin[i]}
+              <div style="font-size: 0.9rem; color: #1e40af; font-weight: 600;">Min: {forecastMin[i].toFixed(1)}°C</div>
+            {/if}
           </div>
         {/each}
       </div>
@@ -302,7 +325,7 @@
   <div class="grid">
     <div class="card">
       {#if labels.length}
-        <WeatherChart {labels} maxData={tempsMax} minData={tempsMin} />
+        <WeatherChart {labels} maxData={tempsMax} minData={tempsMin} forecastMax={forecastMax} forecastMin={forecastMin} />
         <h3>Hourly (next 48+ hours)</h3>
         <div style="margin-bottom: 1rem;">
           {#if hourlyLabels.length}
@@ -337,18 +360,6 @@
       {:else}
         <div>Loading data or no data available.</div>
       {/if}
-    </div>
-
-    <div class="card">
-      <h3>Weather Comparison</h3>
-      <p>Select a city to view its weather forecast from the free Open-Meteo API.</p>
-      <p><strong>Available cities:</strong></p>
-      <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
-        <li>San Francisco</li>
-        <li>New York</li>
-        <li>London</li>
-        <li>Tokyo</li>
-      </ul>
     </div>
   </div>
 </main>

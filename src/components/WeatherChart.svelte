@@ -6,6 +6,8 @@
   export let labels = [];
   export let maxData = [];
   export let minData = [];
+  export let forecastMax = null;
+  export let forecastMin = null;
 
   let canvasEl;
   let chart;
@@ -14,38 +16,92 @@
     if (!canvasEl) return;
     const ctx = canvasEl.getContext('2d');
     if (chart) chart.destroy();
+    
+    const datasets = [
+      { 
+        label: 'Max °C', 
+        data: maxData, 
+        borderColor: '#ef4444', 
+        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+        tension: 0.4, 
+        fill: true,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        pointBackgroundColor: '#ef4444',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2
+      },
+      { 
+        label: 'Min °C', 
+        data: minData, 
+        borderColor: '#3b82f6', 
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        tension: 0.4, 
+        fill: true,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        pointBackgroundColor: '#3b82f6',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2
+      }
+    ];
+
+    // Add forecast data if available
+    let extendedLabels = [...labels];
+    if ((forecastMax && forecastMax.length > 0) || (forecastMin && forecastMin.length > 0)) {
+      const forecastLength = forecastMax?.length || forecastMin?.length || 0;
+      const forecastLabels = Array.from({ length: forecastLength }, (_, i) => `+${i + 1}`);
+      extendedLabels = [...extendedLabels, ...forecastLabels];
+      
+      // Extend max and min data with null values to align with new labels
+      const paddedMaxData = [...maxData, ...Array(forecastLength).fill(null)];
+      const paddedMinData = [...minData, ...Array(forecastLength).fill(null)];
+      
+      datasets[0].data = paddedMaxData;
+      datasets[1].data = paddedMinData;
+      
+      // Add forecast max as a new dataset
+      if (forecastMax && forecastMax.length > 0) {
+        datasets.push({
+          label: 'Forecast Max',
+          data: [...Array(maxData.length).fill(null), ...forecastMax],
+          borderColor: '#dc2626',
+          backgroundColor: 'rgba(220, 38, 38, 0.1)',
+          borderDash: [5, 5],
+          tension: 0.4,
+          fill: true,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          pointBackgroundColor: '#dc2626',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2
+        });
+      }
+
+      // Add forecast min as a new dataset
+      if (forecastMin && forecastMin.length > 0) {
+        datasets.push({
+          label: 'Forecast Min',
+          data: [...Array(minData.length).fill(null), ...forecastMin],
+          borderColor: '#1e40af',
+          backgroundColor: 'rgba(30, 64, 175, 0.1)',
+          borderDash: [5, 5],
+          tension: 0.4,
+          fill: true,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          pointBackgroundColor: '#1e40af',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2
+        });
+      }
+    }
+    
     chart = new Chart(ctx, {
       type: 'line',
       data: {
-        labels: labels,
-        datasets: [
-          { 
-            label: 'Max °C', 
-            data: maxData, 
-            borderColor: '#ef4444', 
-            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-            tension: 0.4, 
-            fill: true,
-            pointRadius: 4,
-            pointHoverRadius: 6,
-            pointBackgroundColor: '#ef4444',
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2
-          },
-          { 
-            label: 'Min °C', 
-            data: minData, 
-            borderColor: '#3b82f6', 
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            tension: 0.4, 
-            fill: true,
-            pointRadius: 4,
-            pointHoverRadius: 6,
-            pointBackgroundColor: '#3b82f6',
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2
-          }
-        ]
+        labels: extendedLabels,
+        datasets: datasets
       },
       options: {
         responsive: true,
@@ -74,7 +130,7 @@
     if (labels.length > 0) createChart();
   });
 
-  $: if (labels && labels.length && canvasEl) {
+  $: if ((labels && labels.length && canvasEl) || forecastMax || forecastMin) {
     createChart();
   }
 

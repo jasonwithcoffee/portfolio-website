@@ -1,4 +1,4 @@
 functions-framework
-scikit-learn
 numpy
 Flask
+darts
