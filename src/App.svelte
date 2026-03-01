@@ -1,7 +1,6 @@
 <script>
   import { onMount } from 'svelte';
   import WeatherChart from './components/WeatherChart.svelte';
-  import HourlyChart from './components/HourlyChart.svelte';
 
   const cities = {
     'San Francisco': { lat: 37.7749, lon: -122.4194, tz: 'America/Los_Angeles' },
@@ -25,8 +24,29 @@
 
   // hourly
   let hourlyLabels = [];
-  let hourlyTemp = [];
+  let hourlyTempMax = [];
+  let hourlyTempMin = [];
   let hourlyPrecip = [];
+
+  // Last 7 days summary
+  let last7Days = [];
+
+  // ML Forecasting
+  let forecastMethod = 'naive_mean';
+  let forecastSteps = 7;
+  let forecastLoading = false;
+  let forecastError = '';
+  let forecastMax = null;
+  let forecastMin = null;
+  let forecastConfidence = 0;
+  
+  // Model-specific parameters
+  let seasonLength = null; // For naive_seasonal
+  let arimaP = 1; // For ARIMA
+  let arimaD = 1; // For ARIMA
+  let arimaQ = 1; // For ARIMA
+  
+  const CLOUD_FUNCTION_URL = 'https://simple-predict-297426001108.us-west1.run.app'; // Change to your deployed Cloud Function URL
 
   function updateCity(city) {
     selectedCity = city;
@@ -47,7 +67,7 @@
     tempsMin = [];
     weathercodes = [];
     try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weathercode&hourly=temperature_2m,precipitation,weathercode&timezone=${encodeURIComponent(timezone)}`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=${encodeURIComponent(timezone)}&past_days=60&forecast_days=0`;
       const res = await fetch(url);
       if (!res.ok) throw new Error(res.statusText);
       const data = await res.json();
@@ -57,15 +77,35 @@
         tempsMax = data.daily.temperature_2m_max || [];
         tempsMin = data.daily.temperature_2m_min || [];
         weathercodes = data.daily.weathercode || [];
+
+        // Calculate last 7 days (past 7 days from today)
+        const pastDaysCount = data.daily.time.findIndex(d => d >= new Date().toISOString().split('T')[0]) || 0;
+        const last7StartIdx = Math.max(0, pastDaysCount - 7);
+        const last7EndIdx = pastDaysCount;
+        
+        last7Days = [];
+        for (let i = last7StartIdx; i < last7EndIdx && i < labels.length; i++) {
+          last7Days.push({
+            date: labels[i],
+            max: tempsMax[i],
+            min: tempsMin[i],
+            weathercode: weathercodes[i]
+          });
+        }
+        // If we don't have enough past data, show what we have
+        if (last7Days.length === 0 && labels.length > 0) {
+          const endIdx = Math.min(7, labels.length);
+          for (let i = 0; i < endIdx; i++) {
+            last7Days.push({
+              date: labels[i],
+              max: tempsMax[i],
+              min: tempsMin[i],
+              weathercode: weathercodes[i]
+            });
+          }
+        }
       }
 
-      if (data?.hourly) {
-        hourlyLabels = data.hourly.time || [];
-        hourlyTemp = data.hourly.temperature_2m || [];
-        hourlyPrecip = data.hourly.precipitation || [];
-      } else {
-        error = 'No daily data returned from API.';
-      }
       lastStatus = 'done';
       console.log('fetchWeather populated', {
         labels: labels.length,
@@ -83,6 +123,74 @@
   onMount(() => {
     fetchWeather();
   });
+
+  async function generateForecast() {
+    if (tempsMax.length === 0 || tempsMin.length === 0) {
+      forecastError = 'Please load weather data first';
+      return;
+    }
+
+    forecastLoading = true;
+    forecastError = '';
+    forecastMax = null;
+    forecastMin = null;
+
+    try {
+      // Build request body with model parameters
+      const requestBody = {
+        forecast_steps: forecastSteps,
+        method: forecastMethod
+      };
+      
+      // Add model-specific parameters
+      if (forecastMethod === 'naive_seasonal' && seasonLength !== null) {
+        requestBody.season_length = seasonLength;
+      }
+      if (forecastMethod === 'arima') {
+        requestBody.arima_p = arimaP;
+        requestBody.arima_d = arimaD;
+        requestBody.arima_q = arimaQ;
+      }
+      
+      // Use daily min/max temperature data for forecasting
+      const [maxResponse, minResponse] = await Promise.all([
+        fetch(CLOUD_FUNCTION_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sequence: tempsMax,
+            ...requestBody
+          })
+        }),
+        fetch(CLOUD_FUNCTION_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sequence: tempsMin,
+            ...requestBody
+          })
+        })
+      ]);
+
+      if (!maxResponse.ok) throw new Error(`HTTP ${maxResponse.status} for max forecast`);
+      if (!minResponse.ok) throw new Error(`HTTP ${minResponse.status} for min forecast`);
+      
+      const maxData = await maxResponse.json();
+      const minData = await minResponse.json();
+
+      if (maxData.status === 'success' && minData.status === 'success') {
+        forecastMax = maxData.forecast;
+        forecastMin = minData.forecast;
+        forecastConfidence = (maxData.confidence + minData.confidence) / 2;
+      } else {
+        forecastError = maxData.message || minData.message || 'Forecast failed';
+      }
+    } catch (e) {
+      forecastError = `Error: ${e.message}`;
+    } finally {
+      forecastLoading = false;
+    }
+  }
 </script>
 
 <style>
@@ -150,7 +258,7 @@
   }
   .grid { 
     display: grid; 
-    grid-template-columns: 1fr 300px; 
+    grid-template-columns: 1fr; 
     gap: 1.5rem;
   }
   .card { 
@@ -185,7 +293,15 @@
 </style>
 
 <main>
-  <h1>Svelte + Open-Meteo Demo</h1>
+  <div style="margin-bottom: 1.5rem;">
+    <h1>Weather Forecast App</h1>
+    <p style="color: rgba(255,255,255,0.95); margin: 0.5rem 0; font-size: 0.95rem;">
+      ML-powered weather forecasting using real-time data and time-series predictions
+    </p>
+    <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 0.85rem; margin-top: 0.5rem;">
+      Created by Jason Yang
+    </p>
+  </div>
 
   <div class="controls">
     <label>
@@ -201,71 +317,99 @@
     </button>
   </div>
 
-  <div style="margin-bottom: 0.5rem;">
-    Status: {lastStatus} {loading ? '(loading)' : ''}
-  </div>
-
-  <div style="font-size: 0.9rem; color: #444; margin-bottom: 0.75rem;">
-    Debug: labels={labels.length}, max={tempsMax.length}, min={tempsMin.length}, hourly={hourlyLabels.length}
-    {#if labels.length}
-      — first: {labels[0]} / {tempsMax[0]}°C
+  <div class="controls">
+    <label>
+      Forecast Method
+      <select bind:value={forecastMethod}>
+        <option value="naive_mean">Naive Mean</option>
+        <option value="naive_seasonal">Naive Seasonal</option>
+        <option value="arima">ARIMA</option>
+        <option value="autoets">AutoETS</option>
+      </select>
+    </label>
+    <label>
+      Forecast Steps
+      <input type="number" bind:value={forecastSteps} min="1" max="30" style="width: 80px; padding: 0.6rem;" />
+    </label>
+    
+    {#if forecastMethod === 'naive_seasonal'}
+      <label>
+        Season Length (optional)
+        <input type="number" bind:value={seasonLength} min="1" placeholder="auto" style="width: 100px; padding: 0.6rem;" />
+      </label>
     {/if}
+    
+    {#if forecastMethod === 'arima'}
+      <label>
+        p <input type="number" bind:value={arimaP} min="0" max="5" style="width: 50px; padding: 0.6rem;" />
+      </label>
+      <label>
+        d <input type="number" bind:value={arimaD} min="0" max="2" style="width: 50px; padding: 0.6rem;" />
+      </label>
+      <label>
+        q <input type="number" bind:value={arimaQ} min="0" max="5" style="width: 50px; padding: 0.6rem;" />
+      </label>
+    {/if}
+    
+    <button 
+      on:click={generateForecast}
+      style="background: linear-gradient(135deg, #3b82f6, #1e40af); font-size: 1rem; padding: 0.8rem 2rem;"
+    >
+      Generate Forecast
+    </button>
   </div>
 
   {#if error}
     <div style="color: crimson;">{error}</div>
   {/if}
 
+  {#if forecastError}
+    <div style="color: crimson; margin-bottom: 1rem;">{forecastError}</div>
+  {/if}
+
   <div class="grid">
     <div class="card">
       {#if labels.length}
-        <WeatherChart {labels} maxData={tempsMax} minData={tempsMin} />
-        <h3>Hourly (next 48+ hours)</h3>
-        <div style="margin-bottom: 1rem;">
-          {#if hourlyLabels.length}
-            <HourlyChart 
-              labels={hourlyLabels} 
-              tempData={hourlyTemp} 
-              precipData={hourlyPrecip} 
-            />
-          {/if}
-        </div>
-        <h3>Daily Data</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Max</th>
-              <th>Min</th>
-              <th>Code</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each labels as label, i}
-              <tr>
-                <td>{label}</td>
-                <td>{tempsMax[i]}</td>
-                <td>{tempsMin[i]}</td>
-                <td>{weathercodes[i]}</td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
+        <WeatherChart {labels} maxData={tempsMax} minData={tempsMin} {forecastMax} {forecastMin} />
       {:else}
         <div>Loading data or no data available.</div>
       {/if}
     </div>
+  </div>
 
-    <div class="card">
-      <h3>Weather Comparison</h3>
-      <p>Select a city to view its weather forecast from the free Open-Meteo API.</p>
-      <p><strong>Available cities:</strong></p>
-      <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
-        <li>San Francisco</li>
-        <li>New York</li>
-        <li>London</li>
-        <li>Tokyo</li>
-      </ul>
-    </div>
+  <div class="card" style="margin-top: 2rem;">
+    <h3 style="color: #667eea; margin-top: 0;">Architecture</h3>
+    <pre style="background: #f3f4f6; padding: 1.5rem; border-radius: 8px; overflow-x: auto; font-size: 0.80rem; line-height: 1.5; color: #1f2937; font-family: 'Courier New', monospace;">
+┌─────────────────────────────────────────────────────────────────────┐
+│                         User Browser                                │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │     Svelte Weather App (Frontend)                            │   │
+│  │  ┌─────────────────┐         ┌──────────────────────────┐    │   │
+│  │  │ City Selection  │ ──────► │ Chart.js Visualizations  │    │   │
+│  │  ├─────────────────┤         ├──────────────────────────┤    │   │
+│  │  │ Forecast Config │         │ Daily/Hourly Charts      │    │   │
+│  │  └─────────────────┘         └──────────────────────────┘    │   │
+│  └────────┬──────────────────────────────────────────────┬──────┘   │
+└───────────┼──────────────────────────────────────────────┼──────────┘
+            │ (2) Fetch Weather Data                       │
+            │                                              │ (3) Forecast Request
+            │                                              │
+    ┌───────▼──────────────┐                    ┌──────────▼──────────────┐
+    │  Open-Meteo API      │                    │  Google Cloud Function  │
+    │  ├─ Daily Max/Min    │                    │  (Python Flask)         │
+    │  ├─ Hourly Forecast  │                    │                         │
+    │  └─ 60 Days History  │                    │  ┌──────────────────┐   │
+    └──────────────────────┘                    │  │ Darts Models:    │   │
+                                                │  ├─ NaiveMean       │   │
+                                                │  ├─ NaiveSeasonal   │   │
+                                                │  ├─ ARIMA           │   │
+                                                │  ├─ AutoETS         │   │
+                                                │  └──────────────────┘   │
+                                                │  (3) Returns Forecast   │
+                                                └─────────────────────────┘
+    </pre>
+    <p style="margin-top: 1rem; color: #666; font-size: 0.9rem;">
+      <strong>Data Flow:</strong> Select a city → Fetch historical weather data from Open-Meteo API → Configure ML forecast model → Send data to Cloud Function → Generate predictions → Visualize results in interactive charts
+    </p>
   </div>
 </main>

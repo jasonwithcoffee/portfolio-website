@@ -1,33 +1,116 @@
-# Svelte + Open-Meteo Demo
+# Weather Forecast App
 
-Lightweight demo showing how to fetch daily weather data from the free Open-Meteo API and visualize it with Svelte + Chart.js.
+A modern weather forecasting application that combines real-time weather data with machine learning predictions. This app fetches historical and current weather data from Open-Meteo and uses various time-series forecasting models to predict future temperature trends.
 
-Quick start
+## Features
 
-1. Install dependencies
+- **Multi-City Weather Tracking**: View weather data for San Francisco, New York, London, and Tokyo
+- **Historical Weather Data**: Access up to 60 days of past weather data
+- **ML-Powered Forecasting**: Multiple forecasting methods including:
+  - Naive Mean (simple average baseline)
+  - Naive Seasonal (seasonal patterns)
+  - ARIMA (AutoRegressive Integrated Moving Average)
+  - AutoETS (Exponential Smoothing)
+- **Interactive Charts**: Visualize daily and hourly temperature trends
+- **Hourly Forecasts**: Detailed hourly weather predictions
+- **Responsive Design**: Works seamlessly across desktop and mobile devices
 
-```bash
-npm install
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         User Browser                                │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │     Svelte Weather App (Frontend)                            │   │
+│  │  ┌─────────────────┐         ┌──────────────────────────┐    │   │
+│  │  │ City Selection  │ ──────► │ Chart.js Visualizations  │    │   │
+│  │  ├─────────────────┤         ├──────────────────────────┤    │   │
+│  │  │ Forecast Config │         │ Daily/Hourly Charts      │    │   │
+│  │  └─────────────────┘         └──────────────────────────┘    │   │
+│  └────────┬──────────────────────────────────────────────┬──────┘   │
+└───────────┼──────────────────────────────────────────────┼──────────┘
+            │ (2) Fetch Weather Data                       │
+            │                                              │ (3) Forecast Request
+            │                                              │
+    ┌───────▼──────────────┐                    ┌──────────▼──────────────┐
+    │  Open-Meteo API      │                    │  Google Cloud Function  │
+    │  ├─ Daily Max/Min    │                    │  (Python Flask)         │
+    │  ├─ Hourly Forecast  │                    │                         │
+    │  └─ 60 Days History  │                    │  ┌──────────────────┐   │
+    └──────────────────────┘                    │  │ Darts Models:    │   │
+                                                │  ├─ NaiveMean       │   │
+                                                │  ├─ NaiveSeasonal   │   │
+                                                │  ├─ ARIMA           │   │
+                                                │  ├─ AutoETS         │   │
+                                                │  └──────────────────┘   │
+                                                │  (3) Returns Forecast   │
+                                                └─────────────────────────┘
 ```
 
-2. Run dev server
+**Data Flow:**
+1. User selects city and forecast parameters in UI
+2. App fetches historical weather data from Open-Meteo API
+3. Historical data sent to Cloud Function for ML forecasting
+4. Multiple models generate temperature predictions
+5. Results visualized in interactive charts
+
+## Tech Stack
+
+**Frontend:**
+- Svelte 4 (reactive UI framework)
+- Chart.js (data visualization)
+- Vite (build tool)
+
+**Backend:**
+- Python with Flask
+- Darts (time-series forecasting library)
+- Google Cloud Functions (serverless deployment)
+
+**Data Source:**
+- Open-Meteo API (free weather data)
+
+## Getting Started
+
+### Prerequisites
+- Node.js (v16+)
+- npm
+
+### Installation
+
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+4. Open your browser and navigate to `http://localhost:5173`
+
+## Development
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+
+## Cloud Function Setup
+
+The forecasting backend runs on Google Cloud Functions. Deploy your own:
 
 ```bash
-npm run dev
+cd cloud-function
+gcloud functions deploy simple-predict --runtime python312 --trigger-http --allow-unauthenticated
 ```
 
-Open http://localhost:5173 and try changing coordinates (default is New York City).
+Update the `CLOUD_FUNCTION_URL` in [src/App.svelte](src/App.svelte) with your deployed function URL.
 
-This demo now includes an hourly forecast visualization (temperature line + precipitation bars).
+## Created by
 
-Files added
+Jason Yang
 
-- [package.json](package.json)
-- [index.html](index.html)
-- [src/main.js](src/main.js)
-- [src/App.svelte](src/App.svelte)
-- [src/components/WeatherChart.svelte](src/components/WeatherChart.svelte)
+## License
 
-Next steps
-
-- Commit the scaffold and tweak styling or add more visualizations (hourly, precipitation probability, icons for weather codes).
+MIT
