@@ -70,26 +70,29 @@ def forecast_naive_mean(sequence, forecast_steps):
         raise
 
 
-def forecast_naive_seasonal(sequence, forecast_steps):
+def forecast_naive_seasonal(sequence, forecast_steps, season_length=None):
     """
     Forecast using Darts NaiveSeasonal (seasonal pattern)
     
     Args:
         sequence: List of numeric values
         forecast_steps: Number of steps to forecast
+        season_length: Optional custom season length
         
     Returns:
         Tuple of (forecast array, confidence score)
     """
-    logger.info(f"forecast_naive_seasonal: sequence_len={len(sequence)}, forecast_steps={forecast_steps}")
+    logger.info(f"forecast_naive_seasonal: sequence_len={len(sequence)}, forecast_steps={forecast_steps}, season_length={season_length}")
     try:
         ts = TimeSeries.from_values(np.array(sequence, dtype=float))
         
-        # NaiveSeasonal requires season_length < len(sequence)
-        # Use half the sequence length as season, but at least 2
-        season_length = max(2, len(sequence) // 2)
-        if season_length >= len(sequence):
-            season_length = len(sequence) - 1
+        # Use provided season_length or calculate it
+        if season_length is None:
+            # NaiveSeasonal requires season_length < len(sequence)
+            # Use half the sequence length as season, but at least 2
+            season_length = max(2, len(sequence) // 2)
+            if season_length >= len(sequence):
+                season_length = len(sequence) - 1
         
         logger.info(f"forecast_naive_seasonal: calculated season_length={season_length}")
         
@@ -110,30 +113,32 @@ def forecast_naive_seasonal(sequence, forecast_steps):
         raise
 
 
-def forecast_arima(sequence, forecast_steps):
+def forecast_arima(sequence, forecast_steps, p=1, d=1, q=1):
     """
     Forecast using Darts ARIMA (AutoRegressive Integrated Moving Average)
     
     Args:
         sequence: List of numeric values
         forecast_steps: Number of steps to forecast
+        p: AutoRegressive order (default: 1)
+        d: Integrated order (default: 1)
+        q: Moving Average order (default: 1)
         
     Returns:
         Tuple of (forecast array, confidence score)
     """
-    logger.info(f"forecast_arima: sequence_len={len(sequence)}, forecast_steps={forecast_steps}")
+    logger.info(f"forecast_arima: sequence_len={len(sequence)}, forecast_steps={forecast_steps}, p={p}, d={d}, q={q}")
     try:
         ts = TimeSeries.from_values(np.array(sequence, dtype=float))
         
         # ARIMA needs sufficient data points
-        # Validate sequence length for d=1 (differencing)
+        # Validate sequence length for d (differencing)
         if len(sequence) < 4:
             raise ValueError(f"ARIMA requires at least 4 data points for differencing, got {len(sequence)}")
         
-        # Fit ARIMA model with conservative parameters
-        # p=1, d=1, q=1 is standard for many time series
-        logger.info("forecast_arima: fitting ARIMA(1,1,1)")
-        model = ARIMA(p=1, d=1, q=1)
+        # Fit ARIMA model with provided parameters
+        logger.info(f"forecast_arima: fitting ARIMA({p},{d},{q})")
+        model = ARIMA(p=p, d=d, q=q)
         model.fit(ts)
         
         # Forecast
@@ -228,7 +233,14 @@ def forecast_weather(request: Request):
         forecast_steps = request_json.get('forecast_steps', 7)
         method = request_json.get('method', 'naive_mean')
         
+        # Extract model-specific parameters
+        arima_p = request_json.get('arima_p', 1)
+        arima_d = request_json.get('arima_d', 1)
+        arima_q = request_json.get('arima_q', 1)
+        season_length = request_json.get('season_length')
+        
         logger.info(f"Request params: method={method}, forecast_steps={forecast_steps}, sequence_len={len(sequence) if sequence else 0}")
+        logger.info(f"Model-specific params: season_length={season_length}, arima_p={arima_p}, arima_d={arima_d}, arima_q={arima_q}")
         
         if not sequence or len(sequence) < 3:
             msg = 'sequence must have at least 3 values'
@@ -252,9 +264,9 @@ def forecast_weather(request: Request):
         if method == 'naive_mean':
             forecast, confidence = forecast_naive_mean(sequence, forecast_steps)
         elif method == 'naive_seasonal':
-            forecast, confidence = forecast_naive_seasonal(sequence, forecast_steps)
+            forecast, confidence = forecast_naive_seasonal(sequence, forecast_steps, season_length)
         elif method == 'arima':
-            forecast, confidence = forecast_arima(sequence, forecast_steps)
+            forecast, confidence = forecast_arima(sequence, forecast_steps, arima_p, arima_d, arima_q)
         else:  # autoets
             forecast, confidence = forecast_autoets(sequence, forecast_steps)
         
@@ -265,7 +277,13 @@ def forecast_weather(request: Request):
             'confidence': float(confidence),
             'input_length': len(sequence),
             'forecast_steps': forecast_steps,
-            'method': method
+            'method': method,
+            'parameters': {
+                'season_length': season_length,
+                'arima_p': arima_p if method == 'arima' else None,
+                'arima_d': arima_d if method == 'arima' else None,
+                'arima_q': arima_q if method == 'arima' else None
+            }
         })), 200
     
     except Exception as e:

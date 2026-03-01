@@ -39,6 +39,13 @@
   let forecastMax = null;
   let forecastMin = null;
   let forecastConfidence = 0;
+  
+  // Model-specific parameters
+  let seasonLength = null; // For naive_seasonal
+  let arimaP = 1; // For ARIMA
+  let arimaD = 1; // For ARIMA
+  let arimaQ = 1; // For ARIMA
+  
   const CLOUD_FUNCTION_URL = 'https://simple-predict-297426001108.us-west1.run.app'; // Change to your deployed Cloud Function URL
 
   function updateCity(city) {
@@ -129,6 +136,22 @@
     forecastMin = null;
 
     try {
+      // Build request body with model parameters
+      const requestBody = {
+        forecast_steps: forecastSteps,
+        method: forecastMethod
+      };
+      
+      // Add model-specific parameters
+      if (forecastMethod === 'naive_seasonal' && seasonLength !== null) {
+        requestBody.season_length = seasonLength;
+      }
+      if (forecastMethod === 'arima') {
+        requestBody.arima_p = arimaP;
+        requestBody.arima_d = arimaD;
+        requestBody.arima_q = arimaQ;
+      }
+      
       // Use daily min/max temperature data for forecasting
       const [maxResponse, minResponse] = await Promise.all([
         fetch(CLOUD_FUNCTION_URL, {
@@ -136,8 +159,7 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             sequence: tempsMax,
-            forecast_steps: forecastSteps,
-            method: forecastMethod
+            ...requestBody
           })
         }),
         fetch(CLOUD_FUNCTION_URL, {
@@ -145,8 +167,7 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             sequence: tempsMin,
-            forecast_steps: forecastSteps,
-            method: forecastMethod
+            ...requestBody
           })
         })
       ]);
@@ -302,6 +323,26 @@
       Forecast Steps
       <input type="number" bind:value={forecastSteps} min="1" max="30" style="width: 80px; padding: 0.6rem;" />
     </label>
+    
+    {#if forecastMethod === 'naive_seasonal'}
+      <label>
+        Season Length (optional)
+        <input type="number" bind:value={seasonLength} min="1" placeholder="auto" style="width: 100px; padding: 0.6rem;" />
+      </label>
+    {/if}
+    
+    {#if forecastMethod === 'arima'}
+      <label>
+        p <input type="number" bind:value={arimaP} min="0" max="5" style="width: 50px; padding: 0.6rem;" />
+      </label>
+      <label>
+        d <input type="number" bind:value={arimaD} min="0" max="2" style="width: 50px; padding: 0.6rem;" />
+      </label>
+      <label>
+        q <input type="number" bind:value={arimaQ} min="0" max="5" style="width: 50px; padding: 0.6rem;" />
+      </label>
+    {/if}
+    
     <button 
       on:click={generateForecast}
       style="background: linear-gradient(135deg, #3b82f6, #1e40af); font-size: 1rem; padding: 0.8rem 2rem;"
