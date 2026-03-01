@@ -48,6 +48,12 @@
         error = 'No daily data returned from API.';
       }
       lastStatus = 'done';
+      console.log('fetchWeather populated', {
+        labels: labels.length,
+        tempsMax: tempsMax.length,
+        tempsMin: tempsMin.length,
+        hourly: hourlyLabels.length
+      });
     } catch (e) {
       error = e.message;
     } finally {
@@ -80,6 +86,13 @@
   </div>
 
   <div style="margin-bottom:0.5rem">Status: {lastStatus} {loading ? '(loading)' : ''}</div>
+
+  <div style="font-size:0.9rem; color:#444; margin-bottom:0.75rem">
+    Debug: labels={labels.length}, max={tempsMax.length}, min={tempsMin.length}, hourly={hourlyLabels.length}
+    {#if labels.length}
+      — first: {labels[0]} / {tempsMax[0]}°C
+    {/if}
+  </div>
 
   {#if error}
     <div style="color:crimson">{error}</div>
