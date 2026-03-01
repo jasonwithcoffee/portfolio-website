@@ -3,9 +3,9 @@
   import WeatherChart from './components/WeatherChart.svelte';
   import HourlyChart from './components/HourlyChart.svelte';
 
-  let latitude = 40.7128;
-  let longitude = -74.0060;
-  let timezone = 'America/New_York';
+  let latitude = 37.7749;
+  let longitude = -122.4194;
+  let timezone = 'America/Los_Angeles';
   let loading = false;
   let error = '';
   let lastStatus = '';
@@ -65,14 +65,76 @@
 </script>
 
 <style>
-  main { font-family: system-ui, Arial; padding: 1rem; max-width: 900px; margin: 0 auto; }
-  .controls { display:flex; gap:0.5rem; align-items:center; margin-bottom:1rem; flex-wrap:wrap }
-  input { padding:0.4rem; width:140px }
-  button { padding:0.5rem 0.8rem }
-  .grid { display:grid; grid-template-columns:1fr 320px; gap:1rem }
-  .card { background:#fff; padding:1rem; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.06) }
+  main { 
+    font-family: system-ui, Arial; 
+    padding: 2rem; 
+    max-width: 1200px; 
+    margin: 0 auto;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #333;
+  }
+  h1 { color: #fff; margin-bottom: 0.5rem; text-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+  .controls { 
+    display:flex; 
+    gap:1rem; 
+    align-items:center; 
+    margin-bottom:2rem; 
+    flex-wrap:wrap;
+    background: rgba(255,255,255,0.95);
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  }
+  input { 
+    padding:0.6rem; 
+    width:140px;
+    border: 2px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 0.95rem;
+  }
+  input:focus { 
+    outline: none; 
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+  button { 
+    padding:0.7rem 1.5rem;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  button:hover:not(:disabled) { 
+    background: #5568d3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
+  .grid { 
+    display:grid; 
+    grid-template-columns:1fr 300px; 
+    gap:1.5rem;
+  }
+  .card { 
+    background:#fff; 
+    padding:2rem; 
+    border-radius:12px; 
+    box-shadow:0 8px 32px rgba(0,0,0,0.1);
+    backdrop-filter: blur(10px);
+  }
+  h3 { color: #667eea; margin-top: 1.5rem; margin-bottom: 1rem; }
   table { width:100%; border-collapse:collapse }
-  td, th { padding:0.25rem 0.5rem; text-align:left }
+  td, th { 
+    padding:0.75rem 0.5rem; 
+    text-align:left;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  th { background: #f9fafb; font-weight: 600; color: #667eea; }
+  tr:hover { background: #f9fafb; }
 </style>
 
 <main>
