@@ -11,8 +11,7 @@ A modern weather forecasting application that combines real-time weather data wi
   - Naive Seasonal (seasonal patterns)
   - ARIMA (AutoRegressive Integrated Moving Average)
   - AutoETS (Exponential Smoothing)
-- **Interactive Charts**: Visualize daily and hourly temperature trends
-- **Hourly Forecasts**: Detailed hourly weather predictions
+- **Interactive Charts**: Visualize daily temperature trends
 - **Responsive Design**: Works seamlessly across desktop and mobile devices
 
 ## Architecture
@@ -25,17 +24,17 @@ A modern weather forecasting application that combines real-time weather data wi
 │  │  ┌─────────────────┐         ┌──────────────────────────┐    │   │
 │  │  │ City Selection  │ ──────► │ Chart.js Visualizations  │    │   │
 │  │  ├─────────────────┤         ├──────────────────────────┤    │   │
-│  │  │ Forecast Config │         │ Daily/Hourly Charts      │    │   │
+│  │  │ Forecast Config │         │ Daily Charts             │    │   │
 │  │  └─────────────────┘         └──────────────────────────┘    │   │
 │  └────────┬──────────────────────────────────────────────┬──────┘   │
 └───────────┼──────────────────────────────────────────────┼──────────┘
-            │ (2) Fetch Weather Data                       │
-            │                                              │ (3) Forecast Request
+            │ (1) Fetch Weather Data                       │
+            │                                              │ (2) Forecast Request
             │                                              │
     ┌───────▼──────────────┐                    ┌──────────▼──────────────┐
     │  Open-Meteo API      │                    │  Google Cloud Function  │
     │  ├─ Daily Max/Min    │                    │  (Python Flask)         │
-    │  ├─ Hourly Forecast  │                    │                         │
+
     │  └─ 60 Days History  │                    │  ┌──────────────────┐   │
     └──────────────────────┘                    │  │ Darts Models:    │   │
                                                 │  ├─ NaiveMean       │   │
