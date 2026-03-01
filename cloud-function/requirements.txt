@@ -1,4 +1,4 @@
-functions-framework==3.5.0
-scikit-learn==1.3.2
-numpy==1.24.3
-Flask==3.0.0
+functions-framework
+scikit-learn
+numpy
+Flask

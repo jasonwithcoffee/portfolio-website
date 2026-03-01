@@ -6,6 +6,13 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.ensemble import RandomForestRegressor
 import traceback
 
+def set_cors_headers(response):
+    """Add CORS headers to response"""
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    return response
+
 @functions_framework.http
 def forecast_weather(request: Request):
     """
@@ -25,6 +32,10 @@ def forecast_weather(request: Request):
         "status": "success"
     }
     """
+    # Handle CORS preflight requests
+    if request.method == 'OPTIONS':
+        return set_cors_headers(jsonify({})), 204
+    
     try:
         # Parse request JSON
         request_json = request.get_json(silent=True) or {}
@@ -35,16 +46,16 @@ def forecast_weather(request: Request):
         method = request_json.get('method', 'linear')
         
         if not sequence or len(sequence) < 3:
-            return jsonify({
+            return set_cors_headers(jsonify({
                 'status': 'error',
                 'message': 'sequence must have at least 3 values'
-            }), 400
+            })), 400
         
         if method not in ['linear', 'polynomial', 'random_forest']:
-            return jsonify({
+            return set_cors_headers(jsonify({
                 'status': 'error',
                 'message': f'method must be one of: linear, polynomial, random_forest. Got: {method}'
-            }), 400
+            })), 400
         
         # Convert to numpy array
         y = np.array(sequence, dtype=float)
@@ -85,18 +96,18 @@ def forecast_weather(request: Request):
         score = model.score(X, y)
         confidence = max(0, min(1, score))  # Clamp between 0 and 1
         
-        return jsonify({
+        return set_cors_headers(jsonify({
             'status': 'success',
             'forecast': forecast.tolist(),
             'confidence': float(confidence),
             'input_length': len(sequence),
             'forecast_steps': forecast_steps,
             'method': method
-        }), 200
+        })), 200
     
     except Exception as e:
-        return jsonify({
+        return set_cors_headers(jsonify({
             'status': 'error',
             'message': str(e),
             'traceback': traceback.format_exc()
-        }), 500
+        })), 500

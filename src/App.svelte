@@ -28,6 +28,15 @@
   let hourlyTemp = [];
   let hourlyPrecip = [];
 
+  // ML Forecasting
+  let forecastMethod = 'linear';
+  let forecastSteps = 7;
+  let forecastLoading = false;
+  let forecastError = '';
+  let forecast = null;
+  let forecastConfidence = 0;
+  const CLOUD_FUNCTION_URL = 'https://simple-predict-297426001108.us-west1.run.app'; // Change to your deployed Cloud Function URL
+
   function updateCity(city) {
     selectedCity = city;
     const cityData = cities[city];
@@ -83,6 +92,43 @@
   onMount(() => {
     fetchWeather();
   });
+
+  async function generateForecast() {
+    if (tempsMax.length === 0) {
+      forecastError = 'Please load weather data first';
+      return;
+    }
+
+    forecastLoading = true;
+    forecastError = '';
+    forecast = null;
+
+    try {
+      const response = await fetch(CLOUD_FUNCTION_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sequence: tempsMax,
+          forecast_steps: forecastSteps,
+          method: forecastMethod
+        })
+      });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+
+      if (data.status === 'success') {
+        forecast = data.forecast;
+        forecastConfidence = data.confidence;
+      } else {
+        forecastError = data.message || 'Forecast failed';
+      }
+    } catch (e) {
+      forecastError = `Error: ${e.message}`;
+    } finally {
+      forecastLoading = false;
+    }
+  }
 </script>
 
 <style>
@@ -201,6 +247,24 @@
     </button>
   </div>
 
+  <div class="controls">
+    <label>
+      Forecast Method
+      <select bind:value={forecastMethod}>
+        <option value="linear">Linear</option>
+        <option value="polynomial">Polynomial</option>
+        <option value="random_forest">Random Forest</option>
+      </select>
+    </label>
+    <label>
+      Forecast Steps
+      <input type="number" bind:value={forecastSteps} min="1" max="30" style="width: 80px; padding: 0.6rem;" />
+    </label>
+    <button on:click={generateForecast} disabled={forecastLoading || tempsMax.length === 0}>
+      {forecastLoading ? 'Generating…' : 'Generate Forecast'}
+    </button>
+  </div>
+
   <div style="margin-bottom: 0.5rem;">
     Status: {lastStatus} {loading ? '(loading)' : ''}
   </div>
@@ -214,6 +278,25 @@
 
   {#if error}
     <div style="color: crimson;">{error}</div>
+  {/if}
+
+  {#if forecastError}
+    <div style="color: crimson; margin-bottom: 1rem;">{forecastError}</div>
+  {/if}
+
+  {#if forecast}
+    <div class="card" style="margin-bottom: 1.5rem; background: #f0f9ff; border-left: 4px solid #667eea;">
+      <h3>ML Forecast Results ({forecastMethod})</h3>
+      <p><strong>Confidence:</strong> {(forecastConfidence * 100).toFixed(1)}%</p>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.75rem; margin-top: 1rem;">
+        {#each forecast as value, i}
+          <div style="background: white; padding: 1rem; border-radius: 6px; text-align: center; border: 1px solid #e5e7eb;">
+            <div style="font-size: 0.85rem; color: #666;">Day +{i + 1}</div>
+            <div style="font-size: 1.5rem; font-weight: bold; color: #667eea;">{value.toFixed(1)}°C</div>
+          </div>
+        {/each}
+      </div>
+    </div>
   {/if}
 
   <div class="grid">
